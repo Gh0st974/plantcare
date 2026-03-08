@@ -4,17 +4,17 @@ import { usePlants } from '../../hooks/usePlants'
 const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
 
 const COLORS = [
-  { label: 'Vert',   bg: 'bg-green-400' },
-  { label: 'Bleu',   bg: 'bg-blue-400' },
-  { label: 'Jaune',  bg: 'bg-yellow-400' },
-  { label: 'Rouge',  bg: 'bg-red-400' },
-  { label: 'Violet', bg: 'bg-purple-400' },
-  { label: 'Orange', bg: 'bg-orange-400' },
+  { label: 'Vert',   bg: 'bg-green-400',  light: 'bg-green-100',  text: 'text-green-700' },
+  { label: 'Bleu',   bg: 'bg-blue-400',   light: 'bg-blue-100',   text: 'text-blue-700' },
+  { label: 'Jaune',  bg: 'bg-yellow-400', light: 'bg-yellow-100', text: 'text-yellow-700' },
+  { label: 'Rouge',  bg: 'bg-red-400',    light: 'bg-red-100',    text: 'text-red-700' },
+  { label: 'Violet', bg: 'bg-purple-400', light: 'bg-purple-100', text: 'text-purple-700' },
+  { label: 'Orange', bg: 'bg-orange-400', light: 'bg-orange-100', text: 'text-orange-700' },
 ]
 
 const STORAGE_KEY = 'calendrier_annuel'
-const LANE_HEIGHT = 28 // px par lane
-const LANE_GAP = 4    // px entre lanes
+const LANE_HEIGHT = 28
+const LANE_GAP = 4
 
 function loadTasks() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [] }
@@ -24,24 +24,133 @@ function saveTasks(tasks) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
 }
 
-// Algorithme de calcul des lanes sans chevauchement
 function assignLanes(tasks) {
   const sorted = [...tasks].sort((a, b) => a.startMonth - b.startMonth)
-  const lanes = [] // lanes[i] = mois de fin de la dernière tâche dans cette lane
-
+  const lanes = []
   return sorted.map(task => {
-    // Cherche la première lane libre
     let laneIdx = lanes.findIndex(endMonth => endMonth < task.startMonth)
-    if (laneIdx === -1) {
-      laneIdx = lanes.length
-      lanes.push(task.endMonth)
-    } else {
-      lanes[laneIdx] = task.endMonth
-    }
+    if (laneIdx === -1) { laneIdx = lanes.length; lanes.push(task.endMonth) }
+    else { lanes[laneIdx] = task.endMonth }
     return { ...task, lane: laneIdx }
   })
 }
 
+// ─── Composant Vue Liste (Mobile) ────────────────────────────────
+function TaskCard({ task, onEdit }) {
+  const color = COLORS[task.colorIndex || 0]
+  const monthRange = task.startMonth === task.endMonth
+    ? MONTHS[task.startMonth]
+    : `${MONTHS[task.startMonth]} → ${MONTHS[task.endMonth]}`
+
+  return (
+    <div
+      onClick={() => onEdit(task)}
+      className={`flex items-center justify-between px-4 py-3 rounded-xl border cursor-pointer hover:shadow-sm transition ${color.light} border-transparent`}
+    >
+      <div className="flex items-center gap-3">
+        <div className={`w-3 h-3 rounded-full flex-shrink-0 ${color.bg}`} />
+        <span className={`text-sm font-medium ${color.text}`}>{task.label}</span>
+      </div>
+      <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${color.bg} text-white`}>
+        {monthRange}
+      </span>
+    </div>
+  )
+}
+
+function MobileList({ rows, onEdit }) {
+  return (
+    <div className="space-y-5">
+      {rows.map(row => (
+        <div key={row.key}>
+          <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">
+            {row.label}
+          </p>
+          {row.tasks.length === 0 ? (
+            <p className="text-xs text-gray-300 italic px-1">Aucune tâche</p>
+          ) : (
+            <div className="space-y-2">
+              {row.tasks.map(task => (
+                <TaskCard key={task.id} task={task} onEdit={onEdit} />
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Composant Gantt (Desktop) ───────────────────────────────────
+function GanttView({ rows, onEdit }) {
+  return (
+    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+      <table className="w-full table-fixed">
+        <thead>
+          <tr className="bg-green-50 border-b border-gray-200">
+            <th className="w-36 px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Plante
+            </th>
+            {MONTHS.map((m, i) => (
+              <th key={i} className="px-0 py-2 text-center text-xs font-medium text-gray-500">
+                {m}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(row => {
+            const rowHeight = row.laneCount * LANE_HEIGHT + (row.laneCount - 1) * LANE_GAP + 12
+            return (
+              <tr key={row.key} className="border-b border-gray-100 hover:bg-gray-50">
+                <td className="px-3 text-sm font-medium text-gray-700 truncate align-middle"
+                  style={{ height: rowHeight }}>
+                  {row.label}
+                </td>
+                {MONTHS.map((_, monthIdx) => (
+                  <td key={monthIdx} className="relative px-0 py-0" style={{ height: rowHeight }}>
+                    {row.tasks
+                      .filter(t => monthIdx >= t.startMonth && monthIdx <= t.endMonth)
+                      .map(task => {
+                        const color = COLORS[task.colorIndex || 0]
+                        const isStart = monthIdx === task.startMonth
+                        const isEnd = monthIdx === task.endMonth
+                        const topOffset = task.lane * (LANE_HEIGHT + LANE_GAP) + 6
+                        return (
+                          <div
+                            key={task.id}
+                            onClick={() => onEdit(task)}
+                            title={task.label}
+                            style={{
+                              position: 'absolute',
+                              top: topOffset,
+                              height: LANE_HEIGHT,
+                              left: isStart ? 4 : 0,
+                              right: isEnd ? 4 : 0,
+                              borderRadius: `${isStart ? '999px' : '0'} ${isEnd ? '999px' : '0'} ${isEnd ? '999px' : '0'} ${isStart ? '999px' : '0'}`,
+                            }}
+                            className={`${color.bg} opacity-85 hover:opacity-100 cursor-pointer transition flex items-center overflow-hidden`}
+                          >
+                            {isStart && (
+                              <span className="px-2 text-white text-xs font-semibold truncate whitespace-nowrap">
+                                {task.label}
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })}
+                  </td>
+                ))}
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// ─── Composant Principal ──────────────────────────────────────────
 export default function SeasonalView() {
   const { plants } = usePlants()
   const [tasks, setTasks] = useState(loadTasks)
@@ -51,22 +160,15 @@ export default function SeasonalView() {
     label: '', plantId: '', startMonth: 0, endMonth: 0, colorIndex: 0,
   })
 
-  // Construire les rows avec lanes calculées
   const buildRows = () => {
-    const rows = []
-
-    // Global
     const globalTasks = assignLanes(tasks.filter(t => !t.plantId))
     const globalLanes = globalTasks.length > 0 ? Math.max(...globalTasks.map(t => t.lane)) + 1 : 1
-    rows.push({ key: 'global', label: '🌍 Global', tasks: globalTasks, laneCount: globalLanes })
-
-    // Par plante
+    const rows = [{ key: 'global', label: '🌍 Global', tasks: globalTasks, laneCount: globalLanes }]
     plants.forEach(p => {
       const pt = assignLanes(tasks.filter(t => t.plantId === p.id))
       const laneCount = pt.length > 0 ? Math.max(...pt.map(t => t.lane)) + 1 : 1
       rows.push({ key: p.id, label: `🌿 ${p.name}`, tasks: pt, laneCount })
     })
-
     return rows
   }
 
@@ -127,86 +229,21 @@ export default function SeasonalView() {
           onClick={openAdd}
           className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition"
         >
-          + Ajouter une tâche
+          + Ajouter
         </button>
       </div>
 
-      {/* Gantt */}
-      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-        <table className="w-full table-fixed">
-          <thead>
-            <tr className="bg-green-50 border-b border-gray-200">
-              <th className="w-36 px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Plante
-              </th>
-              {MONTHS.map((m, i) => (
-                <th key={i} className="px-0 py-2 text-center text-xs font-medium text-gray-500">
-                  {m}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(row => {
-              const rowHeight = row.laneCount * LANE_HEIGHT + (row.laneCount - 1) * LANE_GAP + 12
-              return (
-                <tr key={row.key} className="border-b border-gray-100 hover:bg-gray-50">
-                  {/* Label */}
-                  <td className="px-3 text-sm font-medium text-gray-700 truncate align-middle"
-                    style={{ height: rowHeight }}>
-                    {row.label}
-                  </td>
-
-                  {/* Cells */}
-                  {MONTHS.map((_, monthIdx) => (
-                    <td
-                      key={monthIdx}
-                      className="relative px-0 py-0"
-                      style={{ height: rowHeight }}
-                    >
-                      {row.tasks
-                        .filter(t => monthIdx >= t.startMonth && monthIdx <= t.endMonth)
-                        .map(task => {
-                          const color = COLORS[task.colorIndex || 0]
-                          const isStart = monthIdx === task.startMonth
-                          const isEnd = monthIdx === task.endMonth
-                          const topOffset = task.lane * (LANE_HEIGHT + LANE_GAP) + 6
-
-                          return (
-                            <div
-                              key={task.id}
-                              onClick={() => openEdit(task)}
-                              title={task.label}
-                              style={{
-                                position: 'absolute',
-                                top: topOffset,
-                                height: LANE_HEIGHT,
-                                left: isStart ? 4 : 0,
-                                right: isEnd ? 4 : 0,
-                                borderRadius: `${isStart ? '999px' : '0'} ${isEnd ? '999px' : '0'} ${isEnd ? '999px' : '0'} ${isStart ? '999px' : '0'}`,
-                              }}
-                              className={`${color.bg} opacity-85 hover:opacity-100 cursor-pointer transition flex items-center overflow-hidden`}
-                            >
-                              {isStart && (
-                                <span className="px-2 text-white text-xs font-semibold truncate whitespace-nowrap">
-                                  {task.label}
-                                </span>
-                              )}
-                            </div>
-                          )
-                        })}
-                    </td>
-                  ))}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+      {/* Gantt desktop / Liste mobile */}
+      <div className="hidden md:block">
+        <GanttView rows={rows} onEdit={openEdit} />
+      </div>
+      <div className="md:hidden">
+        <MobileList rows={rows} onEdit={openEdit} />
       </div>
 
-      {/* Modal */}
+      {/* Modal — identique */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4">
             <h3 className="text-lg font-semibold text-gray-800">
               {editTask ? 'Modifier la tâche' : 'Nouvelle tâche'}
@@ -230,9 +267,7 @@ export default function SeasonalView() {
                 onChange={e => setForm(f => ({ ...f, plantId: e.target.value }))}
               >
                 <option value="">Global</option>
-                {plants.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
+                {plants.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
 
