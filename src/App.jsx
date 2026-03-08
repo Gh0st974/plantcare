@@ -1,11 +1,9 @@
 import { useState } from 'react'
-import Sidebar from './components/layout/Sidebar.jsx'
+import Sidebar, { BottomNav } from './components/layout/Sidebar.jsx'
 import TopBar from './components/layout/Topbar.jsx'
 import Catalog from './pages/Catalog.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Calendar from './pages/Calendar.jsx'
-import Sidebar, { BottomNav } from './components/layout/Sidebar.jsx'
-
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('dashboard')
