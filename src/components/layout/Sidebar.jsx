@@ -38,6 +38,7 @@ const NAV_ITEMS = [
   { id: 'calendar',  label: 'Calendrier',  icon: Icons.calendar },
 ]
 
+// ─── Sidebar Desktop ───────────────────────────────────────────────
 export default function Sidebar({ currentPage, onNavigate }) {
   return (
     <aside className="w-56 bg-green-800 text-green-100 flex flex-col shadow-xl">
@@ -73,5 +74,29 @@ export default function Sidebar({ currentPage, onNavigate }) {
         <p className="text-xs text-green-400">v0.1.0 — Local</p>
       </div>
     </aside>
+  )
+}
+
+// ─── Bottom Nav Mobile ─────────────────────────────────────────────
+export function BottomNav({ currentPage, onNavigate }) {
+  return (
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-green-800 border-t border-green-700 flex z-50">
+      {NAV_ITEMS.map(item => {
+        const isActive = currentPage === item.id
+        return (
+          <button
+            key={item.id}
+            onClick={() => onNavigate(item.id)}
+            className={`flex-1 flex flex-col items-center justify-center py-3 gap-1 text-xs font-medium transition-colors duration-150
+              ${isActive ? 'text-white' : 'text-green-300'}`}
+          >
+            <span className={`p-1 rounded-lg ${isActive ? 'bg-green-600' : ''}`}>
+              {item.icon}
+            </span>
+            {item.label}
+          </button>
+        )
+      })}
+    </nav>
   )
 }
