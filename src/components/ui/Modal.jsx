@@ -10,14 +10,10 @@ export default function Modal({ title, children, onClose }) {
   }, [onClose])
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
-    >
-      <div 
-        className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col"
-        style={{ maxHeight: 'calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 40px)' }}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col overflow-hidden"
+           style={{ maxHeight: '80vh' }}>
+        
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-100 shrink-0">
           <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
@@ -25,7 +21,7 @@ export default function Modal({ title, children, onClose }) {
         </div>
 
         {/* Body scrollable */}
-        <div className="p-5 overflow-y-auto">
+        <div className="p-5 overflow-y-auto overscroll-contain">
           {children}
         </div>
 
