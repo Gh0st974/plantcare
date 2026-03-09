@@ -17,6 +17,7 @@ export default function ConfigSoins({ config, onSauvegarder, onFermer }) {
         mode: 'frequence',
         intervalJours: 7,
         prochaineDate: '',
+        dateDepart: '',
       }
     })
     return init
@@ -87,8 +88,8 @@ export default function ConfigSoins({ config, onSauvegarder, onFermer }) {
                 {c.actif && (
                   <div className="ml-14 space-y-2">
 
-                    {/* Switch Fréquence / Date fixe */}
-                    <div className="flex gap-2">
+                    {/* Sélecteur de mode : 3 options */}
+                    <div className="flex gap-2 flex-wrap">
                       <button
                         onClick={() => setMode(soin.id, 'frequence')}
                         className={`text-xs px-3 py-1 rounded-full border transition ${
@@ -109,10 +110,21 @@ export default function ConfigSoins({ config, onSauvegarder, onFermer }) {
                       >
                         📅 Date fixe
                       </button>
+                      <button
+                        onClick={() => setMode(soin.id, 'departFrequence')}
+                        className={`text-xs px-3 py-1 rounded-full border transition ${
+                          c.mode === 'departFrequence'
+                            ? 'bg-green-500 text-white border-green-500'
+                            : 'bg-white text-gray-500 border-gray-200 hover:border-green-300'
+                        }`}
+                      >
+                        🗓️ Départ + fréquence
+                      </button>
                     </div>
 
-                    {/* Champ selon le mode */}
-                    {c.mode === 'frequence' ? (
+                    {/* Champs selon le mode */}
+
+                    {c.mode === 'frequence' && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <span>tous les</span>
                         <input
@@ -122,11 +134,13 @@ export default function ConfigSoins({ config, onSauvegarder, onFermer }) {
                           onChange={e => setValeur(soin.id, 'intervalJours', Number(e.target.value))}
                           className="w-16 border border-gray-200 rounded-lg px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-green-400"
                         />
-                        <span>j</span>
+                        <span>jours</span>
                       </div>
-                    ) : (
+                    )}
+
+                    {c.mode === 'dateFixe' && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span>Prochaine date :</span>
+                        <span>Le :</span>
                         <input
                           type="date"
                           value={c.prochaineDate}
@@ -135,6 +149,32 @@ export default function ConfigSoins({ config, onSauvegarder, onFermer }) {
                         />
                       </div>
                     )}
+
+                    {c.mode === 'departFrequence' && (
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <span>Démarre le :</span>
+                          <input
+                            type="date"
+                            value={c.dateDepart}
+                            onChange={e => setValeur(soin.id, 'dateDepart', e.target.value)}
+                            className="border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-400"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span>puis tous les</span>
+                          <input
+                            type="number"
+                            min="1"
+                            value={c.intervalJours}
+                            onChange={e => setValeur(soin.id, 'intervalJours', Number(e.target.value))}
+                            className="w-16 border border-gray-200 rounded-lg px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-green-400"
+                          />
+                          <span>jours</span>
+                        </div>
+                      </div>
+                    )}
+
                   </div>
                 )}
               </div>
