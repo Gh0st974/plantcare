@@ -13,7 +13,14 @@ export function usePlants() {
   })
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(plants))
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(plants))
+    } catch (e) {
+      // Quota dépassé
+      if (e.name === 'QuotaExceededError') {
+        alert('⚠️ Stockage plein ! Supprime des plantes ou des photos pour continuer.')
+      }
+    }
   }, [plants])
 
   function addPlant(plantData) {

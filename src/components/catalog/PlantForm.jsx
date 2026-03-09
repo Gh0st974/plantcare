@@ -2,20 +2,44 @@ import { useState, useRef } from 'react'
 
 const EMPTY_FORM = { name: '', species: '', note: '', photo: null }
 
+// 🔧 Compression avant stockage
+function compressImage(file, maxWidth = 800, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const ratio = Math.min(maxWidth / img.width, 1)
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width * ratio
+      canvas.height = img.height * ratio
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+      resolve(canvas.toDataURL('image/jpeg', quality))
+    }
+    img.onerror = reject
+    img.src = url
+  })
+}
+
 export default function PlantForm({ initial = EMPTY_FORM, onSubmit, onCancel }) {
   const [form, setForm] = useState(initial)
   const [preview, setPreview] = useState(initial.photo || null)
+  const [compressing, setCompressing] = useState(false)
   const fileRef = useRef()
 
-  function handlePhoto(e) {
+  async function handlePhoto(e) {
     const file = e.target.files[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      setPreview(ev.target.result)
-      setForm(f => ({ ...f, photo: ev.target.result }))
+    setCompressing(true)
+    try {
+      const compressed = await compressImage(file)
+      setPreview(compressed)
+      setForm(f => ({ ...f, photo: compressed }))
+    } catch (err) {
+      console.error('Erreur compression image', err)
+    } finally {
+      setCompressing(false)
     }
-    reader.readAsDataURL(file)
   }
 
   function handleSubmit(e) {
@@ -29,9 +53,14 @@ export default function PlantForm({ initial = EMPTY_FORM, onSubmit, onCancel }) 
       {/* Photo */}
       <div
         className="w-full h-40 rounded-xl border-2 border-dashed border-plant-300 flex items-center justify-center cursor-pointer overflow-hidden bg-plant-50"
-        onClick={() => fileRef.current.click()}
+        onClick={() => !compressing && fileRef.current.click()}
       >
-        {preview ? (
+        {compressing ? (
+          <div className="text-center text-gray-400">
+            <div className="text-2xl animate-spin">⏳</div>
+            <p className="text-sm mt-1">Compression en cours...</p>
+          </div>
+        ) : preview ? (
           <img src={preview} alt="preview" className="w-full h-full object-cover" />
         ) : (
           <div className="text-center text-gray-400">
@@ -40,7 +69,7 @@ export default function PlantForm({ initial = EMPTY_FORM, onSubmit, onCancel }) 
           </div>
         )}
       </div>
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
+      <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhoto} />
 
       {/* Nom */}
       <div>
@@ -89,10 +118,11 @@ export default function PlantForm({ initial = EMPTY_FORM, onSubmit, onCancel }) 
           Annuler
         </button>
         <button
-            type="submit"
-            className="flex-1 bg-green-600 text-white rounded-lg py-2 hover:bg-green-700 transition font-medium"
-            >
-            Sauvegarder
+          type="submit"
+          disabled={compressing}
+          className="flex-1 bg-green-600 text-white rounded-lg py-2 hover:bg-green-700 transition font-medium disabled:opacity-50"
+        >
+          Sauvegarder
         </button>
       </div>
     </form>
