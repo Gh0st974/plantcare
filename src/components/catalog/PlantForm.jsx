@@ -1,8 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const EMPTY_FORM = { name: '', species: '', note: '', photo: null }
 
-// 🔧 Compression avant stockage
 function compressImage(file, maxWidth = 800, quality = 0.75) {
   return new Promise((resolve, reject) => {
     const img = new Image()
@@ -25,7 +24,14 @@ export default function PlantForm({ initial = EMPTY_FORM, onSubmit, onCancel }) 
   const [form, setForm] = useState(initial)
   const [preview, setPreview] = useState(initial.photo || null)
   const [compressing, setCompressing] = useState(false)
-  const fileRef = useRef()
+  const galleryRef = useRef()
+  const cameraRef = useRef()
+
+  // ✅ Fix édition : réinitialise quand on change de plante
+  useEffect(() => {
+    setForm(initial)
+    setPreview(initial.photo || null)
+  }, [initial.id])
 
   async function handlePhoto(e) {
     const file = e.target.files[0]
@@ -50,26 +56,53 @@ export default function PlantForm({ initial = EMPTY_FORM, onSubmit, onCancel }) 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Photo */}
-      <div
-        className="w-full h-40 rounded-xl border-2 border-dashed border-plant-300 flex items-center justify-center cursor-pointer overflow-hidden bg-plant-50"
-        onClick={() => !compressing && fileRef.current.click()}
-      >
+
+      {/* Preview photo */}
+      <div className="w-full h-40 rounded-xl border-2 border-dashed border-green-300 overflow-hidden bg-green-50 flex items-center justify-center">
         {compressing ? (
-          <div className="text-center text-gray-400">
-            <div className="text-2xl animate-spin">⏳</div>
-            <p className="text-sm mt-1">Compression en cours...</p>
-          </div>
+          <p className="text-sm text-gray-400">Compression en cours...</p>
         ) : preview ? (
           <img src={preview} alt="preview" className="w-full h-full object-cover" />
         ) : (
-          <div className="text-center text-gray-400">
-            <div className="text-3xl">📷</div>
-            <p className="text-sm mt-1">Cliquer pour ajouter une photo</p>
-          </div>
+          <p className="text-sm text-gray-400">Aucune photo</p>
         )}
       </div>
-      <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhoto} />
+
+      {/* Boutons choix photo */}
+      <div className="flex gap-2">
+        {/* Input galerie caché */}
+        <input
+          ref={galleryRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePhoto}
+        />
+        {/* Input caméra caché */}
+        <input
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handlePhoto}
+        />
+
+        <button
+          type="button"
+          onClick={() => galleryRef.current.click()}
+          className="flex-1 border border-gray-300 text-gray-600 rounded-lg py-2 text-sm hover:bg-gray-50 transition"
+        >
+          📁 Galerie
+        </button>
+        <button
+          type="button"
+          onClick={() => cameraRef.current.click()}
+          className="flex-1 border border-gray-300 text-gray-600 rounded-lg py-2 text-sm hover:bg-gray-50 transition"
+        >
+          📷 Caméra
+        </button>
+      </div>
 
       {/* Nom */}
       <div>
@@ -79,7 +112,7 @@ export default function PlantForm({ initial = EMPTY_FORM, onSubmit, onCancel }) 
           value={form.name}
           onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
           placeholder="Mon Monstera"
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-plant-400"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
           required
         />
       </div>
@@ -92,7 +125,7 @@ export default function PlantForm({ initial = EMPTY_FORM, onSubmit, onCancel }) 
           value={form.species}
           onChange={e => setForm(f => ({ ...f, species: e.target.value }))}
           placeholder="Monstera deliciosa"
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-plant-400"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
         />
       </div>
 
@@ -104,11 +137,11 @@ export default function PlantForm({ initial = EMPTY_FORM, onSubmit, onCancel }) 
           onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
           placeholder="Arroser tous les 7 jours..."
           rows={3}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-plant-400 resize-none"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"
         />
       </div>
 
-      {/* Boutons */}
+      {/* Boutons formulaire */}
       <div className="flex gap-3 pt-2">
         <button
           type="button"
@@ -125,6 +158,7 @@ export default function PlantForm({ initial = EMPTY_FORM, onSubmit, onCancel }) 
           Sauvegarder
         </button>
       </div>
+
     </form>
   )
 }
