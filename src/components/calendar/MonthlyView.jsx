@@ -30,31 +30,32 @@ export default function MonthlyView({ notes, addNote, deleteNote }) {
     else setCurrentMonth(m => m + 1);
   };
 
-  const getPlantCareForDay = (dateKey) => {
+const getPlantCareForDay = (dateKey) => {
   const cares = [];
   plants.forEach(plant => {
     try {
       const stored = localStorage.getItem(`soins_${plant.id}`);
       if (!stored) return;
       const config = JSON.parse(stored);
+
       Object.entries(config).forEach(([soinId, soin]) => {
         if (!soin?.actif) return;
 
-        let nextKey = null;
-
         if (soin.mode === 'dateFixe') {
-          nextKey = soin.prochaineDate || null;
-        } else if (soin.dernierSoin) {
-          const next = new Date(soin.dernierSoin);
-          next.setDate(next.getDate() + (soin.intervalJours || 7));
-          nextKey = next.toISOString().split('T')[0];
-        }
+          // Date fixe : une seule occurrence
+          if (soin.prochaineDate === dateKey) {
+            cares.push({ plant: plant.nom || plant.name, type: soinId });
+          }
 
-        if (nextKey === dateKey) {
-          cares.push({
-            plant: plant.nom || plant.name,
-            type: soinId,
-          });
+        } else if (soin.dernierSoin && soin.intervalJours) {
+          // Intervalle : on projette toutes les occurrences du mois
+          const debut = new Date(soin.dernierSoin);
+          const cible = new Date(dateKey + 'T12:00:00');
+          const diffJours = Math.round((cible - debut) / 86400000);
+
+          if (diffJours > 0 && diffJours % soin.intervalJours === 0) {
+            cares.push({ plant: plant.nom || plant.name, type: soinId });
+          }
         }
       });
     } catch { /* ignore */ }
