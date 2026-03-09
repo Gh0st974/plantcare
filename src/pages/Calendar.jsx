@@ -3,7 +3,7 @@ import MonthlyView from '../components/calendar/MonthlyView';
 import SeasonalView from '../components/calendar/SeasonalView';
 import { useCalendar } from '../hooks/useCalendar';
 
-export default function Calendar() {
+export default function Calendar({ plantsHook }) {
   const [view, setView] = useState('monthly');
   const { notes, seasonalTasks, addNote, deleteNote, addSeasonalTask, deleteSeasonalTask } = useCalendar();
 

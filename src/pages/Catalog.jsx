@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react'
 import Modal from '../components/ui/Modal'
 import PlantForm from '../components/catalog/PlantForm'
 import VueCollection from '../components/catalog/VueCollection'
-import { usePlants } from '../hooks/usePlants'
 
-export default function Catalog() {
-  const { plants, addPlant, updatePlant, deletePlant } = usePlants()
+export default function Catalog({ plantsHook }) {
+  const { plants, addPlant, updatePlant, deletePlant } = plantsHook
   const [search, setSearch] = useState('')
   const [modal, setModal] = useState(null)
   const [editTarget, setEditTarget] = useState(null)
@@ -21,7 +20,7 @@ export default function Catalog() {
   )
 
   function handleAddSubmit(form) {
-    addPlant({ ...form, id: Date.now() })
+    addPlant(form)
     setModal(null)
   }
 
@@ -31,7 +30,7 @@ export default function Catalog() {
   }
 
   function handleEditSubmit(form) {
-    updatePlant({ ...form, id: editTarget.id })
+    updatePlant(editTarget.id, form)
     setModal(null)
     setEditTarget(null)
   }

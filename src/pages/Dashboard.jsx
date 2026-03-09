@@ -1,5 +1,4 @@
 import { useMemo, useState, useCallback } from 'react'
-import { usePlants } from '../hooks/usePlants.js'
 
 function getSoinsData(plantId) {
   const config = JSON.parse(localStorage.getItem(`soins_${plantId}`)) || {}
@@ -35,21 +34,19 @@ const CARE_TYPES = [
   { key: 'taille',      label: 'Taille',      emoji: '✂️' },
 ]
 
-export default function Dashboard() {
-  const { plants } = usePlants()
+export default function Dashboard({ plantsHook }) {
+  const { plants } = plantsHook
   const [tick, setTick] = useState(0)
 
   const markDone = useCallback((plantId, careKey) => {
     const config = JSON.parse(localStorage.getItem(`soins_${plantId}`)) || {}
     if (!config[careKey]) config[careKey] = {}
     config[careKey].dernierSoin = new Date().toISOString().split('T')[0]
-    // Réinitialise la date fixe si applicable
     if (config[careKey].mode === 'dateFixe') {
       config[careKey].prochaineDate = ''
     }
     localStorage.setItem(`soins_${plantId}`, JSON.stringify(config))
 
-    // ✅ Notifie CartePlante dans le même onglet
     window.dispatchEvent(new StorageEvent('storage', {
       key: `soins_${plantId}`,
       newValue: JSON.stringify(config),
