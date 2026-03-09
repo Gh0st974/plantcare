@@ -18,6 +18,7 @@ export default function CartePlante({ plante, onEdit, onDelete }) {
               src={plante.photo}
               alt={plante.nom}
               className="w-full h-full object-cover"
+              style={{ objectPosition: `${plante.photoPosition?.x ?? 50}% ${plante.photoPosition?.y ?? 50}%` }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-5xl">
