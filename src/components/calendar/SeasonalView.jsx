@@ -161,16 +161,26 @@ export default function SeasonalView() {
   })
 
   const buildRows = () => {
-    const globalTasks = assignLanes(tasks.filter(t => !t.plantId))
-    const globalLanes = globalTasks.length > 0 ? Math.max(...globalTasks.map(t => t.lane)) + 1 : 1
-    const rows = [{ key: 'global', label: '🌍 Global', tasks: globalTasks, laneCount: globalLanes }]
-    plants.forEach(p => {
-      const pt = assignLanes(tasks.filter(t => t.plantId === p.id))
-      const laneCount = pt.length > 0 ? Math.max(...pt.map(t => t.lane)) + 1 : 1
-      rows.push({ key: p.id, label: `🌿 ${p.name}`, tasks: pt, laneCount })
-    })
-    return rows
+  const globalTasks = assignLanes(tasks.filter(t => !t.plantId))
+  const globalLanes = globalTasks.length > 0 ? Math.max(...globalTasks.map(t => t.lane)) + 1 : 1
+  
+  const rows = []
+  
+  // Global seulement s'il y a des tâches
+  if (globalTasks.length > 0) {
+    rows.push({ key: 'global', label: '🌍 Global', tasks: globalTasks, laneCount: globalLanes })
   }
+  
+  // Plantes seulement si elles ont des tâches
+  plants.forEach(p => {
+    const pt = assignLanes(tasks.filter(t => t.plantId === p.id))
+    if (pt.length === 0) return  // ← on skip
+    const laneCount = Math.max(...pt.map(t => t.lane)) + 1
+    rows.push({ key: p.id, label: `🌿 ${p.name}`, tasks: pt, laneCount })
+  })
+  
+  return rows
+}
 
   const rows = buildRows()
 
@@ -234,6 +244,13 @@ export default function SeasonalView() {
       </div>
 
       {/* Gantt desktop / Liste mobile */}
+      {rows.length === 0 && (
+  <div className="text-center py-12 text-gray-400">
+    <p className="text-4xl mb-3">📅</p>
+    <p className="font-medium">Aucune tâche saisonnière</p>
+    <p className="text-sm mt-1">Cliquez sur "+ Ajouter" pour commencer.</p>
+  </div>
+)}
       <div className="hidden md:block">
         <GanttView rows={rows} onEdit={openEdit} />
       </div>
