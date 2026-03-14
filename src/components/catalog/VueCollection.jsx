@@ -14,7 +14,7 @@ const VueCollection = ({ plantes, vue, onEdit, onDelete }) => {
                   }
                 </span>
               <div>
-                <p className="font-semibold text-gray-800">{plante.nom}</p>
+                <p className="font-semibold text-gray-800">{plante.name}</p>
               </div>
             </div>
             <div className="flex gap-2">
