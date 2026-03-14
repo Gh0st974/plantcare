@@ -15,7 +15,6 @@ const VueCollection = ({ plantes, vue, onEdit, onDelete }) => {
                 </span>
               <div>
                 <p className="font-semibold text-gray-800">{plante.nom}</p>
-                <p className="text-sm text-gray-400">{plante.nomScientifique || 'Espèce inconnue'}</p>
               </div>
             </div>
             <div className="flex gap-2">
