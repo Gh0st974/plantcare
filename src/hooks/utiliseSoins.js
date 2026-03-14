@@ -9,12 +9,30 @@ function joursRestants(soin) {
 
   if (soin.mode === 'dateFixe') {
     if (!soin.prochaineDate) return null
-    const cible = new Date(soin.prochaineDate)
-    return Math.round((cible - aujourd) / 86400000)
+    return Math.round((new Date(soin.prochaineDate) - aujourd) / 86400000)
   }
 
+  if (soin.mode === 'departFrequence') {
+    const depart = soin.dateDepart ? new Date(soin.dateDepart) : null
+    if (!depart) return null
+    depart.setHours(0, 0, 0, 0)
+
+    const base = soin.dernierSoin ? new Date(soin.dernierSoin) : depart
+    base.setHours(0, 0, 0, 0)
+
+    if (aujourd < depart && !soin.dernierSoin) {
+      return Math.round((depart - aujourd) / 86400000)
+    }
+
+    const prochaine = new Date(base)
+    prochaine.setDate(prochaine.getDate() + (soin.intervalJours || 7))
+    return Math.round((prochaine - aujourd) / 86400000)
+  }
+
+  // mode 'frequence' (défaut)
   if (!soin.dernierSoin) return 0
   const dernier = new Date(soin.dernierSoin)
+  dernier.setHours(0, 0, 0, 0)
   const prochaine = new Date(dernier)
   prochaine.setDate(prochaine.getDate() + (soin.intervalJours || 7))
   return Math.round((prochaine - aujourd) / 86400000)
