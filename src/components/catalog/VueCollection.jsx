@@ -7,10 +7,15 @@ const VueCollection = ({ plantes, vue, onEdit, onDelete }) => {
         {plantes.map(plante => (
           <div key={plante.id} className="flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">{plante.emoji || '🌿'}</span>
+                <span className="text-2xl">
+                  {plante.photo 
+                    ? <img src={plante.photo} className="w-8 h-8 rounded-full object-cover" />
+                    : '🌿'
+                  }
+                </span>
               <div>
                 <p className="font-semibold text-gray-800">{plante.nom}</p>
-                <p className="text-sm text-gray-400">{plante.espece || 'Espèce inconnue'}</p>
+                <p className="text-sm text-gray-400">{plante.nomScientifique || 'Espèce inconnue'}</p>
               </div>
             </div>
             <div className="flex gap-2">
