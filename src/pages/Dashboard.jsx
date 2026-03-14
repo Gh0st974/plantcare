@@ -126,30 +126,30 @@ export default function Dashboard({ plantsHook }) {
         <p className="text-sm text-gray-400 mt-1">Ce qui nécessite ton attention</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <p className="text-3xl font-bold text-gray-800">{plants.length}</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 text-center">
+          <p className="text-2xl sm:text-3xl font-bold text-gray-800">{plants.length}</p>
           <p className="text-sm text-gray-400 mt-1">Plantes</p>
         </div>
-        <div className="bg-red-50 rounded-xl border border-red-200 p-4 text-center">
-          <p className="text-3xl font-bold text-red-600">{late.length}</p>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 text-center">
+          <p className="text-2xl sm:text-3xl font-bold text-gray-800">{late.length}</p>
           <p className="text-sm text-red-400 mt-1">En retard</p>
         </div>
-        <div className="bg-yellow-50 rounded-xl border border-yellow-200 p-4 text-center">
-          <p className="text-3xl font-bold text-yellow-600">{soon.length}</p>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 text-center">
+          <p className="text-2xl sm:text-3xl font-bold text-gray-800">{soon.length}</p>
           <p className="text-sm text-yellow-400 mt-1">Dans 3 jours</p>
         </div>
       </div>
 
       {late.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-red-200 p-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 text-center">
           <h3 className="font-semibold text-red-700 mb-3">🚨 En retard</h3>
           {late.map((item, i) => <CareRow key={i} item={item} />)}
         </div>
       )}
 
       {soon.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-yellow-200 p-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 text-center">
           <h3 className="font-semibold text-yellow-700 mb-3">⏰ À faire dans les 3 prochains jours</h3>
           {soon.map((item, i) => <CareRow key={i} item={item} />)}
         </div>

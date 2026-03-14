@@ -40,7 +40,7 @@ export default function Catalog({ plantsHook }) {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -56,12 +56,12 @@ export default function Catalog({ plantsHook }) {
       </div>
 
       {/* Barre recherche + toggle */}
-      <div className="flex gap-3">
+      <div className="flex gap-2 min-w-0">
         <input
           placeholder="🔍 Rechercher une plante..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white"
+          className="min-w-0 flex-1 border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white"
         />
         {/* Toggle vue */}
         <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
