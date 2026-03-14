@@ -1,18 +1,18 @@
 import { useState, useCallback } from 'react'
+import { loadSoins, saveSoins } from '../services/kdrive'
+import { useSync } from './useSync'
 
 const AUJOURD_HUI = () => new Date().toISOString().split('T')[0]
 
+// (tes fonctions joursRestants et statutSoin inchangées)
 function joursRestants(soin) {
   if (!soin?.actif) return null
   const aujourd = new Date()
   aujourd.setHours(0, 0, 0, 0)
-
   if (soin.mode === 'dateFixe') {
     if (!soin.prochaineDate) return null
-    const cible = new Date(soin.prochaineDate)
-    return Math.round((cible - aujourd) / 86400000)
+    return Math.round((new Date(soin.prochaineDate) - aujourd) / 86400000)
   }
-
   if (!soin.dernierSoin) return 0
   const dernier = new Date(soin.dernierSoin)
   const prochaine = new Date(dernier)
@@ -30,6 +30,8 @@ function statutSoin(soin) {
 
 export function utiliseSoins(planteId) {
   const storageKey = `soins_${planteId}`
+  const hasToken = !!localStorage.getItem('kdrive_token')
+  const { withSync } = useSync()
 
   const [config, setConfig] = useState(() => {
     try {
@@ -40,10 +42,24 @@ export function utiliseSoins(planteId) {
     }
   })
 
+  // ── Chargement initial depuis KDrive ──────────────────────────────────
+  useState(() => {
+    if (!hasToken || !planteId) return
+    withSync(async () => {
+      const remote = await loadSoins(planteId)
+      if (!remote) return
+      setConfig(remote)
+      localStorage.setItem(storageKey, JSON.stringify(remote))
+    })
+  })
+
   const sauvegarderConfig = useCallback((nouvelleConfig) => {
     setConfig(nouvelleConfig)
     localStorage.setItem(storageKey, JSON.stringify(nouvelleConfig))
-  }, [storageKey])
+    if (hasToken) {
+      withSync(() => saveSoins(planteId, nouvelleConfig))
+    }
+  }, [storageKey, planteId, hasToken, withSync])
 
   const enregistrerSoin = useCallback((soinId) => {
     setConfig(prev => {
@@ -56,9 +72,12 @@ export function utiliseSoins(planteId) {
         }
       }
       localStorage.setItem(storageKey, JSON.stringify(updated))
+      if (hasToken) {
+        withSync(() => saveSoins(planteId, updated))
+      }
       return updated
     })
-  }, [storageKey])
+  }, [storageKey, planteId, hasToken, withSync])
 
   const soinsActifs = Object.entries(config)
     .filter(([, s]) => s?.actif)
