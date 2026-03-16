@@ -24,6 +24,16 @@ function saveTasks(tasks) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
 }
 
+// ─── Distance en mois depuis aujourd'hui (0 = ce mois-ci) ────────────────────
+function getMonthDistance(startMonth) {
+  const currentMonth = new Date().getMonth() // 0-11
+  if (startMonth >= currentMonth) {
+    return startMonth - currentMonth
+  } else {
+    return (12 - currentMonth) + startMonth // boucle sur l'année suivante
+  }
+}
+
 function assignLanes(tasks) {
   const sorted = [...tasks].sort((a, b) => a.startMonth - b.startMonth)
   const lanes = []
@@ -161,26 +171,34 @@ export default function SeasonalView() {
   })
 
   const buildRows = () => {
-  const globalTasks = assignLanes(tasks.filter(t => !t.plantId))
-  const globalLanes = globalTasks.length > 0 ? Math.max(...globalTasks.map(t => t.lane)) + 1 : 1
-  
-  const rows = []
-  
-  // Global seulement s'il y a des tâches
-  if (globalTasks.length > 0) {
-    rows.push({ key: 'global', label: '🌍 Global', tasks: globalTasks, laneCount: globalLanes })
+    const rows = []
+
+    // ── Global ──────────────────────────────────────────────────────
+    const globalTasks = assignLanes(tasks.filter(t => !t.plantId))
+    if (globalTasks.length > 0) {
+      const laneCount = Math.max(...globalTasks.map(t => t.lane)) + 1
+      const closestDistance = Math.min(
+        ...globalTasks.map(t => getMonthDistance(Number(t.startMonth)))
+      )
+      rows.push({ key: 'global', label: '🌍 Global', tasks: globalTasks, laneCount, closestDistance })
+    }
+
+    // ── Plantes ─────────────────────────────────────────────────────
+    plants.forEach(p => {
+      const pt = assignLanes(tasks.filter(t => t.plantId === p.id))
+      if (pt.length === 0) return
+      const laneCount = Math.max(...pt.map(t => t.lane)) + 1
+      const closestDistance = Math.min(
+        ...pt.map(t => getMonthDistance(Number(t.startMonth)))
+      )
+      rows.push({ key: p.id, label: `🌿 ${p.name}`, tasks: pt, laneCount, closestDistance })
+    })
+
+    // ── Tri par proximité temporelle ────────────────────────────────
+    rows.sort((a, b) => a.closestDistance - b.closestDistance)
+
+    return rows
   }
-  
-  // Plantes seulement si elles ont des tâches
-  plants.forEach(p => {
-    const pt = assignLanes(tasks.filter(t => t.plantId === p.id))
-    if (pt.length === 0) return  // ← on skip
-    const laneCount = Math.max(...pt.map(t => t.lane)) + 1
-    rows.push({ key: p.id, label: `🌿 ${p.name}`, tasks: pt, laneCount })
-  })
-  
-  return rows
-}
 
   const rows = buildRows()
 
@@ -245,12 +263,12 @@ export default function SeasonalView() {
 
       {/* Gantt desktop / Liste mobile */}
       {rows.length === 0 && (
-  <div className="text-center py-12 text-gray-400">
-    <p className="text-4xl mb-3">📅</p>
-    <p className="font-medium">Aucune tâche saisonnière</p>
-    <p className="text-sm mt-1">Cliquez sur "+ Ajouter" pour commencer.</p>
-  </div>
-)}
+        <div className="text-center py-12 text-gray-400">
+          <p className="text-4xl mb-3">📅</p>
+          <p className="font-medium">Aucune tâche saisonnière</p>
+          <p className="text-sm mt-1">Cliquez sur "+ Ajouter" pour commencer.</p>
+        </div>
+      )}
       <div className="hidden md:block">
         <GanttView rows={rows} onEdit={openEdit} />
       </div>
@@ -258,7 +276,7 @@ export default function SeasonalView() {
         <MobileList rows={rows} onEdit={openEdit} />
       </div>
 
-      {/* Modal — identique */}
+      {/* Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4">
